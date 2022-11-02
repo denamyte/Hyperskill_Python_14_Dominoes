@@ -7,6 +7,160 @@ files:
   learner_created: false
 - name: tests.py
   visible: false
+  text: |
+    from test.tests import TestStage2
+
+    if __name__ == '__main__':
+        TestStage2('dominoes.dominoes').run_tests()
+  learner_created: false
+- name: dominoes/domino_menu.py
+  visible: true
+  text: |
+    from Dominoes.task.dominoes.domino_game import DominoGame
+
+
+    class DominoMenu:
+        def __init__(self, game: DominoGame):
+            self._game = game
+
+        def first_move(self):
+            print('Stock pieces: ' + self._game.stock_str)
+            print('Computer pieces: ' + str(self._game.get_player(0)))
+            print('Player pieces: ' + str(self._game.get_player(1)))
+            print('Domino snake: ' + str(self._game.snake_str))
+            print('Status: ' + self._game.get_player(self._game.move_index).name)
+  learner_created: true
+- name: dominoes/domino_items.py
+  visible: true
+  text: |
+    from typing import Iterable, Tuple
+    from random import shuffle
+
+
+    class DominoPiece:
+        def __init__(self, left: int, right: int):
+            self._left = left
+            self._right = right
+
+        @property
+        def left(self):
+            return self._left
+
+        @property
+        def right(self):
+            return self._right
+
+        def __str__(self):
+            return f'[{self._left}, {self._right}]'
+
+
+    class DominoPile:
+        def __init__(self, pieces: Iterable[DominoPiece]):
+            self._pieces = list(pieces)
+
+        def read_piece(self, index: int) -> DominoPiece | None:
+            return None \
+                if index < 0 or index >= len(self._pieces) \
+                else DominoPiece(self._pieces[index].left, self._pieces[index].right)
+
+        def pop_piece(self, index: int) -> DominoPiece | None:
+            return None \
+                if index < 0 or index >= len(self._pieces) \
+                else self._pieces.pop(index)
+
+        def add_piece(self, piece: DominoPiece):
+            self._pieces.append(piece)
+
+        def __str__(self):
+            return '[{}]'.format(', '.join(str(p) for p in self._pieces))
+
+
+    class DominoStock(DominoPile):
+        def __init__(self, pieces: Iterable[DominoPiece]):
+            super().__init__(pieces)
+
+        def shuffle(self):
+            shuffle(self._pieces)
+
+        def pop_first_n(self, n: int) -> Iterable[DominoPiece]:
+            if n > len(self._pieces):
+                return []
+            popped = self._pieces[:n]
+            self._pieces = self._pieces[n:]
+            return popped
+
+
+    class DominoPlayer(DominoPile):
+        def __init__(self, pieces: Iterable[DominoPiece], name: str):
+            super().__init__(pieces)
+            self._name = name
+
+        def highest_double_index_value(self) -> Tuple[int, int]:
+            index, value = -1, -1
+            for i, p in enumerate(self._pieces):
+                if p.left == p.right and p.left > value:
+                    index = i
+                    value = p.left
+            return index, value
+
+        @property
+        def name(self) -> str:
+            return self._name
+  learner_created: true
+- name: dominoes/domino_game.py
+  visible: true
+  text: |
+    from typing import List
+
+    from Dominoes.task.dominoes.domino_items import DominoPile, DominoPiece, DominoPlayer, DominoStock
+
+
+    class DominoGame:
+        def __init__(self):
+            self._stock: DominoStock | None = None
+            self._players: List[DominoPlayer] = []
+            self._snake: DominoPile | None = None
+            self.move_index = -1
+            self.generate_dominoes()
+
+        def generate_dominoes(self):
+            while True:
+                self._stock = DominoStock(DominoPiece(left, right)
+                                          for left in range(7)
+                                          for right in range(left, 7))
+                self._stock.shuffle()
+                self._players = [DominoPlayer(self._stock.pop_first_n(7), name) for name in ('computer', 'player')]
+                highest_double_indices = tuple(p.highest_double_index_value() for p in self._players)
+                if sum(map(lambda x: x[0], highest_double_indices)) == -len(highest_double_indices):
+                    continue
+
+                highest_value = -1
+                player_to_donate_index = -1
+                highest_value_index = -1
+                for i, highest_double_tuple in enumerate(highest_double_indices):
+                    if highest_double_tuple[1] > highest_value:
+                        highest_value = highest_double_tuple[1]
+                        player_to_donate_index = i
+                        highest_value_index = highest_double_tuple[0]
+
+                start_piece = self._players[player_to_donate_index].pop_piece(highest_value_index)
+                self._snake = DominoPile([start_piece])
+                self.move_index = (player_to_donate_index + 1) % len(self._players)
+                break
+
+        def get_player(self, i: int) -> DominoPlayer:
+            return self._players[i]
+
+        @property
+        def stock_str(self):
+            return str(self._stock)
+
+        @property
+        def snake_str(self):
+            return str(self._snake)
+  learner_created: true
+- name: test/tests.py
+  visible: false
   text: "from typing import List, Any\nfrom hstest import StageTest, CheckResult,\
     \ WrongAnswer, TestCase\nimport ast\n\n\nclass TestStage2(StageTest):\n\n    def\
     \ generate(self) -> List[TestCase]:\n        return [\n            TestCase(),\n\
@@ -78,6 +232,12 @@ files:
     \ is the player, who is to make the next move.\")\n        return CheckResult.correct()\n\
     \n\nif __name__ == '__main__':\n    TestStage2('dominoes.dominoes').run_tests()\n"
   learner_created: false
+- name: test/__init__.py
+  visible: false
+  learner_created: false
 feedback_link: https://hyperskill.org/learn/step/11856#comment
-status: Unchecked
+status: Solved
+feedback:
+  message: Congratulations!
+  time: Wed, 02 Nov 2022 04:06:39 UTC
 record: -1

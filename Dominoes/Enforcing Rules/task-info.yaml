@@ -8,6 +8,14 @@ files:
 - name: tests.py
   visible: false
   text: |
+    from test.tests import TestStage4
+
+    if __name__ == '__main__':
+        TestStage4('dominoes.dominoes').run_tests()
+  learner_created: false
+- name: test/tests.py
+  visible: false
+  text: |
     from typing import List, Any
     from hstest.stage_test import StageTest
     from hstest.test_case import TestCase
@@ -368,6 +376,9 @@ files:
 
     if __name__ == '__main__':
         TestStage4('dominoes.dominoes').run_tests()
+  learner_created: false
+- name: test/__init__.py
+  visible: false
   learner_created: false
 feedback_link: https://hyperskill.org/learn/step/11858#comment
 status: Unchecked

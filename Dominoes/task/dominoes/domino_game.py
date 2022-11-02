@@ -1,6 +1,17 @@
+from enum import Enum, IntEnum
 from typing import List
 
 from Dominoes.task.dominoes.domino_items import DominoPile, DominoPiece, DominoPlayer, DominoStock
+
+
+class Indices(IntEnum):
+    COMPUTER = 0
+    PLAYER = 1
+
+
+class Status(Enum):
+    COMPUTER = 'computer'
+    PLAYER = 'player'
 
 
 class DominoGame:
@@ -8,10 +19,12 @@ class DominoGame:
         self._stock: DominoStock | None = None
         self._players: List[DominoPlayer] = []
         self._snake: DominoPile | None = None
-        self.move_index = -1
-        self.generate_dominoes()
+        self._move_index = -1
+        self._generate_dominoes()
+        self._status = Status.PLAYER
+        self._change_status()
 
-    def generate_dominoes(self):
+    def _generate_dominoes(self):
         while True:
             self._stock = DominoStock(DominoPiece(left, right)
                                       for left in range(7)
@@ -33,16 +46,28 @@ class DominoGame:
 
             start_piece = self._players[player_to_donate_index].pop_piece(highest_value_index)
             self._snake = DominoPile([start_piece])
-            self.move_index = (player_to_donate_index + 1) % len(self._players)
+            self._move_index = (player_to_donate_index + 1) % len(self._players)
             break
 
-    def get_player(self, i: int) -> DominoPlayer:
-        return self._players[i]
+    def _change_status(self):
+        self._status = Status.COMPUTER if self._move_index == Indices.COMPUTER else Status.PLAYER
 
     @property
-    def stock_str(self):
-        return str(self._stock)
+    def stock_size(self) -> int:
+        return self._stock.size
 
     @property
-    def snake_str(self):
-        return str(self._snake)
+    def comp_size(self) -> int:
+        return self._players[Indices.COMPUTER].size
+
+    @property
+    def snake_pieces(self) -> List[DominoPiece]:
+        return self._snake.pieces
+
+    @property
+    def player_pieces(self) -> List[DominoPiece]:
+        return self._players[Indices.PLAYER].pieces
+
+    @property
+    def status(self) -> Status:
+        return self._status

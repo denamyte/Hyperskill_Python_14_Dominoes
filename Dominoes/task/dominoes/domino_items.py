@@ -1,4 +1,4 @@
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, List
 from random import shuffle
 
 
@@ -35,6 +35,14 @@ class DominoPile:
 
     def add_piece(self, piece: DominoPiece):
         self._pieces.append(piece)
+
+    @property
+    def size(self):
+        return len(self._pieces)
+
+    @property
+    def pieces(self) -> List[DominoPiece]:
+        return self._pieces[:]
 
     def __str__(self):
         return '[{}]'.format(', '.join(str(p) for p in self._pieces))
