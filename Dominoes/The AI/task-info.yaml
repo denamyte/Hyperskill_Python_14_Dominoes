@@ -367,6 +367,6 @@ files:
     if __name__ == '__main__':
         TestStage5('dominoes.dominoes').run_tests()
   learner_created: false
-feedback_link: https://hyperskill.org/projects/146/stages/790/implement#comment
+feedback_link: https://hyperskill.org/learn/step/11859#comment
 status: Unchecked
 record: -1

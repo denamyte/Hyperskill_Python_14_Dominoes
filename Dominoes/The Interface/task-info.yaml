@@ -78,6 +78,6 @@ files:
     \ is the player, who is to make the next move.\")\n        return CheckResult.correct()\n\
     \n\nif __name__ == '__main__':\n    TestStage2('dominoes.dominoes').run_tests()\n"
   learner_created: false
-feedback_link: https://hyperskill.org/projects/146/stages/787/implement#comment
+feedback_link: https://hyperskill.org/learn/step/11856#comment
 status: Unchecked
 record: -1

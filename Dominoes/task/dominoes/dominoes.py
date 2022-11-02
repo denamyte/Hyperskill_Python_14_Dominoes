@@ -1,1 +1,7 @@
-# Write your code here
+from Dominoes.task.dominoes.domino_game import DominoGame
+from Dominoes.task.dominoes.domino_menu import DominoMenu
+
+if __name__ == '__main__':
+    game = DominoGame()
+    menu = DominoMenu(game)
+    menu.first_move()

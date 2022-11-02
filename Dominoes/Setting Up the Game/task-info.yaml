@@ -101,6 +101,18 @@ files:
   text: |
     # Write your code here
   learner_created: false
-feedback_link: https://hyperskill.org/projects/146/stages/786/implement#comment
-status: Unchecked
+- name: dominoes/domino_items.py
+  visible: true
+  learner_created: true
+- name: dominoes/domino_game.py
+  visible: true
+  learner_created: true
+- name: dominoes/domino_menu.py
+  visible: true
+  learner_created: true
+feedback_link: https://hyperskill.org/learn/step/11855#comment
+status: Solved
+feedback:
+  message: Congratulations!
+  time: Mon, 31 Oct 2022 14:27:03 UTC
 record: -1
