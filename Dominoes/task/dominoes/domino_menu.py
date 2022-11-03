@@ -37,6 +37,9 @@ class DominoMenu:
                 try:
                     move = int(input())
                     if abs(move) <= self._game.player_size:
+                        if not self._game.move_matches_snake(move):
+                            self._illegal_move()
+                            continue
                         self._game.player_move(move)
                         break
                 except ValueError:
@@ -59,15 +62,15 @@ class DominoMenu:
     def _snake(self):
         pieces = self._game.snake_pieces
         if len(pieces) > 6:
-            self._print_snake(pieces[:3])
+            self._snake_detail(pieces[:3])
             print('...', end='')
-            self._print_snake(pieces[-3:])
+            self._snake_detail(pieces[-3:])
         else:
-            self._print_snake(pieces)
+            self._snake_detail(pieces)
         print()
 
     @staticmethod
-    def _print_snake(pieces: List[DominoPiece]):
+    def _snake_detail(pieces: List[DominoPiece]):
         print(''.join(str(p) for p in pieces), end='')
 
     def _player_pieces(self):
@@ -81,3 +84,7 @@ class DominoMenu:
     @staticmethod
     def _invalid_input():
         print('Invalid input. Please try again.')
+
+    @staticmethod
+    def _illegal_move():
+        print('Illegal move. Please try again.')

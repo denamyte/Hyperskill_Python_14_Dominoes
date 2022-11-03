@@ -380,6 +380,324 @@ files:
 - name: test/__init__.py
   visible: false
   learner_created: false
+- name: dominoes/domino_menu.py
+  visible: true
+  text: |
+    from typing import List
+
+    from Dominoes.task.dominoes.domino_game import DominoGame, Status
+    from Dominoes.task.dominoes.domino_items import DominoPiece
+
+    STATUS_MAP = {Status.COMPUTER: '\nStatus: Computer is about to make a move. Press Enter to continue...',
+                  Status.PLAYER: "\nStatus: It's your turn to make a move. Enter your command.",
+                  Status.WIN: '\nStatus: The game is over. You won!',
+                  Status.LOOSE: '\nStatus: The game is over. The computer won!',
+                  Status.DRAW: "\nStatus: The game is over. It's a draw!"}
+    END_GAME_STATUSES = (Status.WIN, Status.LOOSE, Status.DRAW)
+
+
+    class DominoMenu:
+        def __init__(self, game: DominoGame):
+            self._game = game
+
+        def menu_loop(self):
+            while True:
+                self._show_menu()
+                if self._game.status not in END_GAME_STATUSES:
+                    self._next_move_prompt()
+                else:
+                    break
+
+        def _show_menu(self):
+            self._header()
+            self._stock_size()
+            self._computer_pieces()
+            self._snake()
+            self._player_pieces()
+            self._status()
+
+        def _next_move_prompt(self):
+            if self._game.status == Status.PLAYER:
+                while True:
+                    try:
+                        move = int(input())
+                        if abs(move) <= self._game.player_size:
+                            self._game.player_move(move)
+                            break
+                    except ValueError:
+                        pass
+                    self._invalid_input()
+            else:
+                input()
+                self._game.computer_move()
+
+        @staticmethod
+        def _header():
+            print('=' * 70)
+
+        def _stock_size(self):
+            print('Stock size:', self._game.stock_size)
+
+        def _computer_pieces(self):
+            print('Computer pieces:', self._game.comp_size)
+
+        def _snake(self):
+            pieces = self._game.snake_pieces
+            if len(pieces) > 6:
+                self._snake_detail(pieces[:3])
+                print('...', end='')
+                self._snake_detail(pieces[-3:])
+            else:
+                self._snake_detail(pieces)
+            print()
+
+        @staticmethod
+        def _snake_detail(pieces: List[DominoPiece]):
+            print(''.join(str(p) for p in pieces), end='')
+
+        def _player_pieces(self):
+            print('\nYour pieces:')
+            for i, p in enumerate(self._game.player_pieces):
+                print(f'{i + 1}:{p}')
+
+        def _status(self):
+            print(STATUS_MAP[self._game.status])
+
+        @staticmethod
+        def _invalid_input():
+            print('Invalid input. Please try again.')
+  learner_created: true
+- name: dominoes/domino_items.py
+  visible: true
+  text: |
+    from typing import Iterable, Tuple, List
+    from random import shuffle
+
+
+    class DominoPiece:
+        def __init__(self, left: int, right: int):
+            self._left = left
+            self._right = right
+
+        @property
+        def left(self):
+            return self._left
+
+        @property
+        def right(self):
+            return self._right
+
+        def __str__(self):
+            return f'[{self._left}, {self._right}]'
+
+
+    class DominoPile:
+        def __init__(self, pieces: Iterable[DominoPiece]):
+            self._pieces = list(pieces)
+
+        def read_piece(self, index: int) -> DominoPiece | None:
+            return None \
+                if index < 0 or index >= len(self._pieces) \
+                else DominoPiece(self._pieces[index].left, self._pieces[index].right)
+
+        def pop_piece(self, index: int) -> DominoPiece | None:
+            return None \
+                if index < 0 or index >= len(self._pieces) \
+                else self._pieces.pop(index)
+
+        def add_piece(self, piece: DominoPiece, to_end=True):
+            if to_end:
+                self._pieces.append(piece)
+            else:
+                self._pieces.insert(0, piece)
+
+        @property
+        def size(self):
+            return len(self._pieces)
+
+        @property
+        def pieces(self) -> List[DominoPiece]:
+            return self._pieces[:]
+
+        def __str__(self):
+            return '[{}]'.format(', '.join(str(p) for p in self._pieces))
+
+
+    class DominoStock(DominoPile):
+        def __init__(self, pieces: Iterable[DominoPiece]):
+            super().__init__(pieces)
+
+        def shuffle(self):
+            shuffle(self._pieces)
+
+        def pop_first_n(self, n: int) -> Iterable[DominoPiece]:
+            if n > len(self._pieces):
+                return []
+            popped = self._pieces[:n]
+            self._pieces = self._pieces[n:]
+            return popped
+
+
+    class DominoPlayer(DominoPile):
+        def __init__(self, pieces: Iterable[DominoPiece], name: str):
+            super().__init__(pieces)
+            self._name = name
+
+        def highest_double_index_value(self) -> Tuple[int, int]:
+            index, value = -1, -1
+            for i, p in enumerate(self._pieces):
+                if p.left == p.right and p.left > value:
+                    index = i
+                    value = p.left
+            return index, value
+
+        @property
+        def name(self) -> str:
+            return self._name
+
+
+    class DominoSnake(DominoPile):
+        def __init__(self, pieces: Iterable[DominoPiece]):
+            super().__init__(pieces)
+
+        @property
+        def left(self) -> int:
+            return self._pieces[0].left if self.size > 0 else 0
+
+        @property
+        def right(self):
+            return self._pieces[self.size - 1].right if self.size > 0 else 0
+
+        def add_piece(self, piece: DominoPiece, to_end=True):
+            if self.size > 0 and piece.left != piece.right \
+                    and ((not to_end and piece.left == self.left)
+                         or (to_end and piece.right == self.right)):
+                piece = DominoPiece(piece.right, piece.left)
+            super().add_piece(piece, to_end)
+
+        def count_value_times(self, value: int):
+            return sum([p.left, p.right].count(value) for p in self._pieces)
+  learner_created: true
+- name: dominoes/domino_game.py
+  visible: true
+  text: |
+    from enum import Enum, IntEnum
+    from random import randint
+    from typing import List
+
+    from Dominoes.task.dominoes.domino_items import DominoPiece, DominoPlayer, DominoStock, DominoSnake
+
+
+    class Indices(IntEnum):
+        COMPUTER = 0
+        PLAYER = 1
+
+
+    class Status(Enum):
+        COMPUTER = 'computer'
+        PLAYER = 'player'
+        WIN = 'win'
+        LOOSE = 'loose'
+        DRAW = 'draw'
+
+
+    class DominoGame:
+        def __init__(self):
+            self._stock: DominoStock | None = None
+            self._players: List[DominoPlayer] = []
+            self._snake: DominoSnake | None = None
+            self._move_index = -1
+            self._status = Status.PLAYER
+            self._generate_dominoes()
+
+        def _generate_dominoes(self):
+            while True:
+                self._stock = DominoStock(DominoPiece(left, right)
+                                          for left in range(7)
+                                          for right in range(left, 7))
+                self._stock.shuffle()
+                self._players = [DominoPlayer(self._stock.pop_first_n(7), name) for name in ('computer', 'player')]
+                highest_double_indices = tuple(p.highest_double_index_value() for p in self._players)
+                if sum(map(lambda x: x[0], highest_double_indices)) == -len(highest_double_indices):
+                    continue
+
+                highest_value = -1
+                player_to_donate_index = -1
+                highest_value_index = -1
+                for i, highest_double_tuple in enumerate(highest_double_indices):
+                    if highest_double_tuple[1] > highest_value:
+                        highest_value = highest_double_tuple[1]
+                        player_to_donate_index = i
+                        highest_value_index = highest_double_tuple[0]
+
+                start_piece = self._players[player_to_donate_index].pop_piece(highest_value_index)
+                self._snake = DominoSnake([start_piece])
+                self._move_index = player_to_donate_index
+                self._adjust_move_status()
+                break
+
+        def computer_move(self):
+            size = self._players[Indices.COMPUTER].size
+            move = randint(-size, size)
+            self._move(move)
+
+        def player_move(self, move: int):
+            self._move(move)
+
+        def _move(self, move: int):
+            player = self._players[self._move_index]
+            if move == 0:
+                if self._stock.size > 0:
+                    piece = self._stock.pop_piece(self._stock.size - 1)
+                    player.add_piece(piece)
+
+                self._adjust_move_status()
+            else:
+                piece = player.pop_piece(abs(move) - 1)
+                self._snake.add_piece(piece, move > 0)
+                if not player.size:
+                    self._status = Status.WIN if self._status == Status.PLAYER else Status.LOOSE
+                else:
+                    self._check_draw_status()
+                    if self.status != Status.DRAW:
+                        self._adjust_move_status()
+
+        def _check_draw_status(self):
+            s = self._snake
+            if s.size >= 7 and s.left == s.right and s.count_value_times(s.left) == 8:
+                self._status = Status.DRAW
+
+        def _adjust_move_status(self):
+            self._move_index = (self._move_index + 1) % len(self._players)
+            self._status = Status.COMPUTER if self._move_index == Indices.COMPUTER else Status.PLAYER
+
+        @property
+        def stock_size(self) -> int:
+            return self._stock.size
+
+        @property
+        def comp_size(self) -> int:
+            return self._players[Indices.COMPUTER].size
+
+        @property
+        def player_size(self) -> int:
+            return self._players[Indices.PLAYER].size
+
+        @property
+        def snake_pieces(self) -> List[DominoPiece]:
+            return self._snake.pieces
+
+        @property
+        def player_pieces(self) -> List[DominoPiece]:
+            return self._players[Indices.PLAYER].pieces
+
+        @property
+        def status(self) -> Status:
+            return self._status
+  learner_created: true
 feedback_link: https://hyperskill.org/learn/step/11858#comment
-status: Unchecked
+status: Solved
+feedback:
+  message: Congratulations!
+  time: Thu, 03 Nov 2022 04:12:47 UTC
 record: -1

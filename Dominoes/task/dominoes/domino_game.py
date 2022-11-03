@@ -1,8 +1,8 @@
-from random import randint
 from enum import Enum, IntEnum
+from random import randint
 from typing import List
 
-from Dominoes.task.dominoes.domino_items import DominoPile, DominoPiece, DominoPlayer, DominoStock, DominoSnake
+from Dominoes.task.dominoes.domino_items import DominoPiece, DominoPlayer, DominoStock, DominoSnake
 
 
 class Indices(IntEnum):
@@ -54,12 +54,27 @@ class DominoGame:
             break
 
     def computer_move(self):
-        size = self._players[Indices.COMPUTER].size
-        move = randint(-size, size)
+        move = self._select_computer_move()
         self._move(move)
+
+    def _select_computer_move(self):
+        size = self._players[Indices.COMPUTER].size
+        for i in range(size, 0, -1):
+            if self.move_matches_snake(i):
+                return i
+            elif self.move_matches_snake(-i):
+                return -i
+        return 0
 
     def player_move(self, move: int):
         self._move(move)
+
+    def move_matches_snake(self, move: int):
+        if move == 0:
+            return True
+        player = self._players[self._move_index]
+        piece = player.read_piece(abs(move) - 1)
+        return self._snake.piece_matches(piece, move > 0)
 
     def _move(self, move: int):
         player = self._players[self._move_index]

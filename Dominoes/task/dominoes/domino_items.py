@@ -7,6 +7,9 @@ class DominoPiece:
         self._left = left
         self._right = right
 
+    def has_value(self, value: int):
+        return self._left == value or self._right == value
+
     @property
     def left(self):
         return self._left
@@ -105,3 +108,6 @@ class DominoSnake(DominoPile):
 
     def count_value_times(self, value: int):
         return sum([p.left, p.right].count(value) for p in self._pieces)
+
+    def piece_matches(self, piece: DominoPiece, to_end: bool) -> bool:
+        return piece.has_value(self.right) if to_end else piece.has_value(self.left)
