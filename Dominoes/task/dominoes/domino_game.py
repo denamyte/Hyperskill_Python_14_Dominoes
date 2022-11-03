@@ -1,7 +1,8 @@
+from random import randint
 from enum import Enum, IntEnum
 from typing import List
 
-from Dominoes.task.dominoes.domino_items import DominoPile, DominoPiece, DominoPlayer, DominoStock
+from Dominoes.task.dominoes.domino_items import DominoPile, DominoPiece, DominoPlayer, DominoStock, DominoSnake
 
 
 class Indices(IntEnum):
@@ -12,17 +13,19 @@ class Indices(IntEnum):
 class Status(Enum):
     COMPUTER = 'computer'
     PLAYER = 'player'
+    WIN = 'win'
+    LOOSE = 'loose'
+    DRAW = 'draw'
 
 
 class DominoGame:
     def __init__(self):
         self._stock: DominoStock | None = None
         self._players: List[DominoPlayer] = []
-        self._snake: DominoPile | None = None
+        self._snake: DominoSnake | None = None
         self._move_index = -1
-        self._generate_dominoes()
         self._status = Status.PLAYER
-        self._change_status()
+        self._generate_dominoes()
 
     def _generate_dominoes(self):
         while True:
@@ -45,11 +48,44 @@ class DominoGame:
                     highest_value_index = highest_double_tuple[0]
 
             start_piece = self._players[player_to_donate_index].pop_piece(highest_value_index)
-            self._snake = DominoPile([start_piece])
-            self._move_index = (player_to_donate_index + 1) % len(self._players)
+            self._snake = DominoSnake([start_piece])
+            self._move_index = player_to_donate_index
+            self._adjust_move_status()
             break
 
-    def _change_status(self):
+    def computer_move(self):
+        size = self._players[Indices.COMPUTER].size
+        move = randint(-size, size)
+        self._move(move)
+
+    def player_move(self, move: int):
+        self._move(move)
+
+    def _move(self, move: int):
+        player = self._players[self._move_index]
+        if move == 0:
+            if self._stock.size > 0:
+                piece = self._stock.pop_piece(self._stock.size - 1)
+                player.add_piece(piece)
+
+            self._adjust_move_status()
+        else:
+            piece = player.pop_piece(abs(move) - 1)
+            self._snake.add_piece(piece, move > 0)
+            if not player.size:
+                self._status = Status.WIN if self._status == Status.PLAYER else Status.LOOSE
+            else:
+                self._check_draw_status()
+                if self.status != Status.DRAW:
+                    self._adjust_move_status()
+
+    def _check_draw_status(self):
+        s = self._snake
+        if s.size >= 7 and s.left == s.right and s.count_value_times(s.left) == 8:
+            self._status = Status.DRAW
+
+    def _adjust_move_status(self):
+        self._move_index = (self._move_index + 1) % len(self._players)
         self._status = Status.COMPUTER if self._move_index == Indices.COMPUTER else Status.PLAYER
 
     @property
@@ -59,6 +95,10 @@ class DominoGame:
     @property
     def comp_size(self) -> int:
         return self._players[Indices.COMPUTER].size
+
+    @property
+    def player_size(self) -> int:
+        return self._players[Indices.PLAYER].size
 
     @property
     def snake_pieces(self) -> List[DominoPiece]:

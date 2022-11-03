@@ -33,8 +33,11 @@ class DominoPile:
             if index < 0 or index >= len(self._pieces) \
             else self._pieces.pop(index)
 
-    def add_piece(self, piece: DominoPiece):
-        self._pieces.append(piece)
+    def add_piece(self, piece: DominoPiece, to_end=True):
+        if to_end:
+            self._pieces.append(piece)
+        else:
+            self._pieces.insert(0, piece)
 
     @property
     def size(self):
@@ -79,3 +82,26 @@ class DominoPlayer(DominoPile):
     @property
     def name(self) -> str:
         return self._name
+
+
+class DominoSnake(DominoPile):
+    def __init__(self, pieces: Iterable[DominoPiece]):
+        super().__init__(pieces)
+
+    @property
+    def left(self) -> int:
+        return self._pieces[0].left if self.size > 0 else 0
+
+    @property
+    def right(self):
+        return self._pieces[self.size - 1].right if self.size > 0 else 0
+
+    def add_piece(self, piece: DominoPiece, to_end=True):
+        if self.size > 0 and piece.left != piece.right \
+                and ((not to_end and piece.left == self.left)
+                     or (to_end and piece.right == self.right)):
+            piece = DominoPiece(piece.right, piece.left)
+        super().add_piece(piece, to_end)
+
+    def count_value_times(self, value: int):
+        return sum([p.left, p.right].count(value) for p in self._pieces)
