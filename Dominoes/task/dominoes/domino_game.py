@@ -3,6 +3,7 @@ from random import randint
 from typing import List
 
 from Dominoes.task.dominoes.domino_items import DominoPiece, DominoPlayer, DominoStock, DominoSnake
+from Dominoes.task.dominoes.domino_score import DominoScore
 
 
 class Indices(IntEnum):
@@ -58,12 +59,13 @@ class DominoGame:
         self._move(move)
 
     def _select_computer_move(self):
-        size = self._players[Indices.COMPUTER].size
-        for i in range(size, 0, -1):
-            if self.move_matches_snake(i):
-                return i
-            elif self.move_matches_snake(-i):
-                return -i
+        scores = DominoScore(self._players[Indices.COMPUTER].pieces,
+                             self.snake_pieces)
+        for p in scores.indexed_pieces:
+            for sign in (-1, 1):
+                move = sign * (1 + p.index_in_player)
+                if self.move_matches_snake(move):
+                    return move
         return 0
 
     def player_move(self, move: int):
